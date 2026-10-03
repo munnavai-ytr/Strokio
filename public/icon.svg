@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="pencilBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="pencilWood" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fed7aa" />
+      <stop offset="100%" stop-color="#fdba74" />
+    </linearGradient>
+    <linearGradient id="strokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Drawing Grid Matrix -->
+  <g opacity="0.18" stroke="#94a3b8" stroke-width="2.5" stroke-dasharray="4 6">
+    <line x1="80" y1="80" x2="432" y2="80" />
+    <line x1="80" y1="144" x2="432" y2="144" />
+    <line x1="80" y1="208" x2="432" y2="208" />
+    <line x1="80" y1="272" x2="432" y2="272" />
+    <line x1="80" y1="336" x2="432" y2="336" />
+    <line x1="80" y1="400" x2="432" y2="400" />
+
+    <line x1="80" y1="80" x2="80" y2="432" />
+    <line x1="144" y1="80" x2="144" y2="432" />
+    <line x1="208" y1="80" x2="208" y2="432" />
+    <line x1="272" y1="80" x2="272" y2="432" />
+    <line x1="336" y1="80" x2="336" y2="432" />
+    <line x1="400" y1="80" x2="400" y2="432" />
+  </g>
+
+  <!-- Dynamic Drawing Stroke Guide on Grid -->
+  <path d="M 120 370 C 180 390, 210 320, 240 270 C 270 220, 310 180, 350 200" 
+        fill="none" 
+        stroke="url(#strokeGrad)" 
+        stroke-width="10" 
+        stroke-linecap="round" 
+        stroke-dasharray="6 8" />
+
+  <!-- Smooth Master Stroke drawn by pencil -->
+  <path d="M 110 360 Q 170 340 200 290 T 260 210" 
+        fill="none" 
+        stroke="#f97316" 
+        stroke-width="7" 
+        stroke-linecap="round" />
+
+  <!-- Diagonal Pencil (Mark) -->
+  <g transform="translate(18, -12)">
+    <!-- Shadow -->
+    <path d="M 230 330 L 375 185 L 405 215 L 260 360 Z" fill="#000000" opacity="0.35" />
+
+    <!-- Main Pencil Shaft -->
+    <path d="M 250 310 L 380 180 L 415 215 L 285 345 Z" fill="url(#pencilBody)" />
+    <!-- Pencil Highlights/Facets -->
+    <path d="M 262 322 L 392 192 L 403 203 L 273 333 Z" fill="#ffffff" opacity="0.22" />
+
+    <!-- Eraser Ferrule Band -->
+    <path d="M 380 180 L 398 162 L 433 197 L 415 215 Z" fill="#94a3b8" />
+    <!-- Eraser Tip -->
+    <path d="M 398 162 C 408 152 422 152 432 162 L 448 178 C 458 188 458 202 448 212 L 433 197 Z" fill="#f43f5e" />
+
+    <!-- Sharpened Wood Cone -->
+    <path d="M 250 310 L 285 345 L 218 368 Z" fill="url(#pencilWood)" />
+
+    <!-- Graphite Lead Tip -->
+    <path d="M 228 354 L 238 362 L 214 372 Z" fill="#0f172a" />
+  </g>
+
+  <!-- Sparkle of creativity -->
+  <circle cx="214" cy="372" r="6" fill="#38bdf8" />
+  <circle cx="214" cy="372" r="14" fill="#38bdf8" opacity="0.3" />
+</svg>
