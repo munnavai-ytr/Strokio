@@ -18,7 +18,7 @@ export default function OfflinePage() {
         You are currently offline
       </h1>
       <p className="mt-3 max-w-md text-sm text-[var(--text-muted)] leading-relaxed">
-        DrawAlong needs an active internet connection to load lessons, sync your profile, and upload new photos to Supabase.
+        Strokio needs an active internet connection to load lessons, sync your profile, and upload new photos to Supabase.
       </p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <button

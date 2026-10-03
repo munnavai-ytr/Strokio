@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DrawAlong Database Schema (Push 1 of 3: Foundation, Auth, Storage)
+-- Strokio Database Schema (Push 1 of 3: Foundation, Auth, Storage)
 -- Paste this script into your Supabase SQL Editor and run it.
 -- ==============================================================================
 

@@ -84,8 +84,8 @@ export function PWAInstallButton({ variant = 'default' }: { variant?: 'default' 
       return (
         <button
           onClick={install}
-          aria-label="Install DrawAlong App"
-          title="Install DrawAlong App"
+          aria-label="Install Strokio App"
+          title="Install Strokio App"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent)] text-white shadow-sm hover:opacity-95 transition"
         >
           <Download className="h-4 w-4" />
@@ -126,7 +126,7 @@ export function PWAInstallButton({ variant = 'default' }: { variant?: 'default' 
               >
                 <X className="h-4 w-4" />
               </button>
-              <h3 className="text-lg font-bold text-[var(--text)]">Install DrawAlong on iOS</h3>
+              <h3 className="text-lg font-bold text-[var(--text)]">Install Strokio on iOS</h3>
               <p className="mt-2 text-xs text-[var(--text-muted)] leading-relaxed">
                 To install this web app on your iPhone or iPad:
               </p>

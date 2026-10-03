@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DrawAlong Database Migration 003 (Push 3: Player Progress & Feedback Status)
+-- Strokio Database Migration 003 (Push 3: Player Progress & Feedback Status)
 -- Run this in your Supabase SQL Editor.
 -- ==============================================================================
 

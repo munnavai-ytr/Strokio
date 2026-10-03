@@ -1,6 +1,6 @@
-# DrawAlong - Step-by-Step Drawing Lessons from Any Photo
+# Strokio - Step-by-Step Drawing Lessons from Any Photo
 
-DrawAlong transforms real photos into beginner-friendly, animated step-by-step drawing lessons with synchronized voice narration, an AR camera tracing overlay, and AI-powered paper drawing feedback.
+Strokio transforms real photos into beginner-friendly, animated step-by-step drawing lessons with synchronized voice narration, an AR camera tracing overlay, and AI-powered paper drawing feedback.
 
 ---
 

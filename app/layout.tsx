@@ -15,22 +15,30 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'DrawAlong - Step-by-Step Drawing Lessons from Any Photo',
+  title: {
+    default: 'Strokio - Step-by-Step Drawing Lessons from Any Photo',
+    template: '%s | Strokio',
+  },
   description:
     'Turn any photo into a beginner-friendly, step-by-step drawing lesson with animated player, voice narration, AR camera overlay, and AI drawing feedback.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'DrawAlong',
+    title: 'Strokio',
   },
   icons: {
     icon: '/icon.svg',
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
-    title: 'DrawAlong - Step-by-Step Drawing Lessons',
+    title: 'Strokio - Step-by-Step Drawing Lessons',
     description: 'Turn any photo into a beginner-friendly, step-by-step drawing lesson.',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Strokio - Step-by-Step Drawing Lessons',
+    description: 'Turn any photo into a beginner-friendly, step-by-step drawing lesson.',
   },
 };
 
@@ -48,7 +56,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var stored = localStorage.getItem('drawalong_theme');
+                  var stored = localStorage.getItem('strokio_theme');
                   var isDark = false;
                   if (stored === 'dark') {
                     isDark = true;

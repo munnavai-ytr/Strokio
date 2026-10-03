@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DrawAlong Database Migration 002 (Push 2: AI Engine, Vector Tracing & Narration)
+-- Strokio Database Migration 002 (Push 2: AI Engine, Vector Tracing & Narration)
 -- Run this in your Supabase SQL Editor.
 -- ==============================================================================
 

@@ -18,7 +18,7 @@ export function createClient() {
   if (!url || !anonKey) {
     // Provide a dummy fallback that fails gracefully if invoked before config
     return createBrowserClient(
-      url || 'https://placeholder-drawalong.supabase.co',
+      url || 'https://placeholder-strokio.supabase.co',
       anonKey || 'placeholder-anon-key'
     );
   }

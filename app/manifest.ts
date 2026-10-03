@@ -3,8 +3,8 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'DrawAlong - Step-by-Step Drawing Lessons',
-    short_name: 'DrawAlong',
+    name: 'Strokio - Step-by-Step Drawing Lessons',
+    short_name: 'Strokio',
     description: 'Turn any photo into a beginner-friendly, step-by-step drawing lesson.',
     start_url: '/',
     scope: '/',

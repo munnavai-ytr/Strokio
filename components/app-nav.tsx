@@ -129,10 +129,10 @@ export function AppNav({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               <span className="text-base font-bold tracking-tight text-[var(--text)] block leading-none">
-                DrawAlong
+                Strokio
               </span>
               <span className="text-[10px] font-semibold text-[var(--accent)] tracking-wider uppercase">
-                Push 1 • Foundation
+                Step-by-Step Drawing
               </span>
             </div>
           </Link>
@@ -203,7 +203,7 @@ export function AppNav({ children }: { children: React.ReactNode }) {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white">
             <Sparkles className="h-4 w-4" />
           </div>
-          <span className="font-bold text-base text-[var(--text)]">DrawAlong</span>
+          <span className="font-bold text-base text-[var(--text)]">Strokio</span>
         </Link>
 
         <div className="flex items-center gap-2">

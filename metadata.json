@@ -1,5 +1,5 @@
 {
-  "name": "DrawAlong",
+  "name": "Strokio",
   "description": "Turn any photo into a step-by-step drawing lesson. Foundation, authentication, database, and photo upload.",
   "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

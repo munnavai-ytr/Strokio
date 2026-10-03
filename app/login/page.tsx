@@ -114,7 +114,7 @@ function LoginContent() {
             <Sparkles className="h-8 w-8" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text)]">
-            Welcome to DrawAlong
+            Welcome to Strokio
           </h1>
           <p className="mt-2 text-sm text-[var(--text-muted)]">
             Turn your real photos into beginner-friendly, step-by-step drawing lessons.
