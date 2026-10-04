@@ -91,6 +91,15 @@ export default function HomePage() {
 
   // Load user profile defaults and recent 3 lessons
   useEffect(() => {
+    // Fallback case: If user lands on "/" with a `code` query param, forward to /auth/callback with the same query string
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('code')) {
+        window.location.href = `/auth/callback${url.search}`;
+        return;
+      }
+    }
+
     let isMounted = true;
 
     async function loadData() {

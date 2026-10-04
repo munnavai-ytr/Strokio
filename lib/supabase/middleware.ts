@@ -40,15 +40,24 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // Fallback case: If user lands on "/" with a `code` query param, forward them to /auth/callback with the same query string
+  if (pathname === '/' && request.nextUrl.searchParams.has('code')) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = '/auth/callback';
+    return NextResponse.redirect(callbackUrl);
+  }
+
   const isPublicRoute =
+    pathname === '/login' ||
     pathname.startsWith('/login') ||
+    pathname === '/auth/callback' ||
     pathname.startsWith('/auth/callback') ||
     pathname.startsWith('/offline') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/_next') ||
     pathname.includes('.');
 
-  // Redirect unauthenticated users to /login for protected routes
+  // Redirect unauthenticated users to /login for protected routes (never block /auth/callback or /login)
   if (!user && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/login';

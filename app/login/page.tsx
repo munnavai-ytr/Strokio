@@ -49,7 +49,7 @@ function LoginContent() {
 
     try {
       const supabase = createClient();
-      const redirectUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`;
+      const redirectUrl = `${window.location.origin}/auth/callback`;
 
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -82,7 +82,7 @@ function LoginContent() {
 
     try {
       const supabase = createClient();
-      const redirectUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`;
+      const redirectUrl = `${window.location.origin}/auth/callback`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
