@@ -67,9 +67,11 @@ SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
 # Gemini AI Engine (GEMINI_API_KEY required; models & voice optional with safe defaults)
 GEMINI_API_KEY="your-gemini-api-key"
-# GEMINI_ANALYSIS_MODEL="gemini-2.5-flash"       # Optional (Default: "gemini-2.5-flash", Fallback: "gemini-2.5-flash-lite")
-# GEMINI_TTS_MODEL="gemini-2.5-flash-preview-tts" # Optional (Default: "gemini-2.5-flash-preview-tts", Fallback: "gemini-2.5-pro-preview-tts")
-# GEMINI_TTS_VOICE="Kore"                         # Optional (Default: "Kore")
+# GEMINI_ANALYSIS_MODEL="gemini-3.5-flash-lite"          # Optional (Default: "gemini-3.5-flash-lite")
+# GEMINI_ANALYSIS_FALLBACK_MODEL="gemini-3.5-flash"       # Optional (Default: "gemini-3.5-flash")
+# GEMINI_TTS_MODEL="gemini-2.5-flash-preview-tts"        # Optional (Default: "gemini-2.5-flash-preview-tts")
+# GEMINI_TTS_FALLBACK_MODEL="gemini-2.5-pro-preview-tts" # Optional (Default: "gemini-2.5-pro-preview-tts")
+# GEMINI_TTS_VOICE="Kore"                                # Optional (Default: "Kore")
 
 # Upstash Redis & Rate Limiting (Optional)
 UPSTASH_REDIS_REST_URL="https://your-redis-instance.upstash.io"

@@ -15,12 +15,14 @@ const ai = new GoogleGenAI({
 
 // Optional environment variables with safe defaults in code
 export const DEFAULT_ANALYSIS_MODEL =
-  process.env.GEMINI_ANALYSIS_MODEL?.trim() || 'gemini-2.5-flash';
-export const FALLBACK_ANALYSIS_MODEL = 'gemini-2.5-flash-lite';
+  process.env.GEMINI_ANALYSIS_MODEL?.trim() || 'gemini-3.5-flash-lite';
+export const FALLBACK_ANALYSIS_MODEL =
+  process.env.GEMINI_ANALYSIS_FALLBACK_MODEL?.trim() || 'gemini-3.5-flash';
 
 export const DEFAULT_TTS_MODEL =
   process.env.GEMINI_TTS_MODEL?.trim() || 'gemini-2.5-flash-preview-tts';
-export const FALLBACK_TTS_MODEL = 'gemini-2.5-pro-preview-tts';
+export const FALLBACK_TTS_MODEL =
+  process.env.GEMINI_TTS_FALLBACK_MODEL?.trim() || 'gemini-2.5-pro-preview-tts';
 
 export const DEFAULT_TTS_VOICE =
   process.env.GEMINI_TTS_VOICE?.trim() || 'Kore';
@@ -118,12 +120,28 @@ export async function generateWithModelFallback<T>(
   } catch (err: unknown) {
     if (fallbackModel && isNotFoundError(err)) {
       console.warn(
-        `[${taskName}] Model "${primaryModel}" failed with 404 / NOT_FOUND error. Retrying once with fallback model "${fallbackModel}"...`
+        `[${taskName}] Model "${primaryModel}" failed with 404 / NOT_FOUND error: ${err instanceof Error ? err.stack || err.message : String(err)}. Retrying once with fallback model "${fallbackModel}"...`
       );
       console.log(`[${taskName}] Retrying request with model: ${fallbackModel}`);
-      const fallbackResult = await fn(fallbackModel);
-      console.log(`[${taskName}] Successfully completed request using fallback model: ${fallbackModel}`);
-      return fallbackResult;
+      try {
+        const fallbackResult = await fn(fallbackModel);
+        console.log(`[${taskName}] Successfully completed request using fallback model: ${fallbackModel}`);
+        return fallbackResult;
+      } catch (fallbackErr: unknown) {
+        if (isNotFoundError(fallbackErr)) {
+          console.error(
+            `[${taskName}] Fallback model "${fallbackModel}" also failed with 404 / NOT_FOUND error: ${fallbackErr instanceof Error ? fallbackErr.stack || fallbackErr.message : String(fallbackErr)}`
+          );
+          throw new Error('AI model temporarily unavailable, please try again later');
+        }
+        throw fallbackErr;
+      }
+    }
+    if (isNotFoundError(err)) {
+      console.error(
+        `[${taskName}] Model "${primaryModel}" failed with 404 / NOT_FOUND error: ${err instanceof Error ? err.stack || err.message : String(err)}`
+      );
+      throw new Error('AI model temporarily unavailable, please try again later');
     }
     throw err;
   }
