@@ -218,6 +218,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Stale job protection: Fail jobs older than 4 minutes
+    const now = new Date();
+    const fourMinutesAgo = new Date(now.getTime() - 4 * 60 * 1000);
+    const staleLessons = (lessons || []).filter(
+      (l) => (l.status === 'processing' || l.status === 'queued') && 
+             new Date(l.started_at || l.created_at) < fourMinutesAgo
+    );
+
+    if (staleLessons.length > 0) {
+      const staleIds = staleLessons.map(l => l.id);
+      await supabase
+        .from('lessons')
+        .update({
+          status: 'failed',
+          stage: 'failed',
+          error_message: 'Generation timed out, please retry',
+          finished_at: now.toISOString(),
+        })
+        .in('id', staleIds);
+      
+      // Update local state for the response
+      staleLessons.forEach(l => {
+        l.status = 'failed';
+        l.stage = 'failed';
+        l.error_message = 'Generation timed out, please retry';
+        l.finished_at = now.toISOString();
+      });
+    }
+
     // Attach signed URLs (valid for 1 hour) for private storage images
     const storageClient = createAdminClient() || supabase;
     const lessonsWithSignedUrls = await Promise.all(

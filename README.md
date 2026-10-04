@@ -8,7 +8,10 @@ Strokio transforms real photos into beginner-friendly, animated step-by-step dra
 
 ### 1. AI Lesson Engine & Vector Geometry (Push 2)
 - **Pedagogical Breakdown**: Gemini analyzes the uploaded photo as a warm, patient drawing teacher, breaking it down into structured teaching steps (proportions, big shapes, secondary forms, contours, details, texture, and shading).
-- **Pure-JS Vector Tracing**: Layered Potrace & sharp pipeline generates contour, detail, and luminance shading SVG paths capped at ~25,000 points for smooth performance.
+- **Pure-JS Vector Tracing**: Robust custom contour tracing pipeline using `sharp` for preprocessing and a Marching Squares-based algorithm for vectorization, eliminating external binary dependencies.
+- **Time-Aware Rendering**: Pipeline automatically skips expensive shading layers if generation exceeds 35s, ensuring lessons finish within the 60s serverless timeout.
+- **Auto-Recovery**: Individual API calls detect and fail jobs that have been stuck for > 4 minutes, preventing "stuck" processing states.
+- **Pipeline Health**: Dedicated `/api/health/pipeline` endpoint for end-to-end verification of the tracing engine.
 - **Pedagogical Composition**: Generates proportion guides (centerlines, rule of thirds, block-in primitives) and maps vector paths to steps based on spatial centroids.
 - **Voice Narration**: Gemini TTS generates teacher audio in Bengali (বাংলা) or English, with automatic browser Web Speech synthesis fallback.
 - **Upstash Rate Limiting**: Enforces burst limits, daily UTC quotas (`DAILY_LESSON_LIMIT`), narration limits, and global concurrency guards.

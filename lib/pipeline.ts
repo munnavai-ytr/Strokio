@@ -12,21 +12,18 @@ import type { Lesson, StepPath } from '@/types';
 
 /**
  * End-to-end background lesson generator.
- * Updates stage and progress in database across:
- * 1. Analyzing (Gemini breakdown)
- * 2. Tracing (Potrace vectorization)
- * 3. Composing (Geometry assignment & duration math)
  */
 export async function processLesson(lessonId: string): Promise<void> {
+  const startTime = Date.now();
   const lease = await globalConcurrencyGuard.acquire();
-  // If concurrency limit reached, wait briefly before retrying
   if (!lease.allowed) {
     await new Promise((resolve) => setTimeout(resolve, 3000));
   }
 
-  // Use admin client if available (service role) or standard server client
   const adminClient = createAdminClient();
   const supabase = adminClient || (await createClient());
+
+  let currentStage = 'initializing';
 
   try {
     // 1. Fetch lesson
@@ -40,32 +37,39 @@ export async function processLesson(lessonId: string): Promise<void> {
       throw new Error(`Lesson ${lessonId} could not be found.`);
     }
 
-    // Mark as started & analyzing
+    const updateStage = async (stage: string, progress: number, extra: any = {}) => {
+      currentStage = stage;
+      await supabase
+        .from('lessons')
+        .update({ stage, progress, ...extra })
+        .eq('id', lessonId);
+    };
+
     await supabase
       .from('lessons')
       .update({
         status: 'processing',
-        stage: 'analyzing',
-        progress: 15,
+        stage: 'downloading',
+        progress: 5,
         started_at: new Date().toISOString(),
         attempts: (lesson.attempts || 0) + 1,
         error_message: null,
       })
       .eq('id', lessonId);
 
-    // 2. Download original image from storage
+    // 2. Download original image
     const storageClient = adminClient || supabase;
     const { data: fileData, error: downloadErr } = await storageClient.storage
       .from('originals')
       .download(lesson.image_path);
 
     if (downloadErr || !fileData) {
-      throw new Error('Failed to retrieve original photo from storage.');
+      throw new Error('Could not download photo from storage.');
     }
 
     const rawBuffer = Buffer.from(await fileData.arrayBuffer());
 
-    // Normalize with sharp: auto-orient EXIF, max 1024px on long edge, flatten on white
+    // Normalize
     const normalizedImage = await sharp(rawBuffer)
       .rotate()
       .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
@@ -73,46 +77,33 @@ export async function processLesson(lessonId: string): Promise<void> {
       .png()
       .toBuffer({ resolveWithObject: true });
 
-    // 3. Stage 1: Analyzing with Gemini
+    // 3. Stage: Analyzing
+    await updateStage('analyzing', 15);
     const analysis = await analyzeDrawingPhoto(
       normalizedImage.data,
       lesson.difficulty,
       lesson.voice_language
     );
 
-    // Update progress
-    await supabase
-      .from('lessons')
-      .update({
-        stage: 'tracing',
-        progress: 50,
-        title: analysis.title || lesson.title,
-      })
-      .eq('id', lessonId);
+    // 4. Stage: Tracing
+    await updateStage('tracing', 40, { title: analysis.title || lesson.title });
+    
+    // Time check before starting tracing
+    const traceResult = await traceImageToPaths(normalizedImage.data, { startTime });
+    const traceElapsed = (Date.now() - startTime) / 1000;
 
-    // 4. Stage 2: Tracing vector paths with Potrace
-    const traceResult = await traceImageToPaths(normalizedImage.data);
+    // 5. Stage: Composing
+    await updateStage('composing', 75, {
+      viewbox_w: traceResult.width,
+      viewbox_h: traceResult.height,
+    });
 
-    // Update progress
-    await supabase
-      .from('lessons')
-      .update({
-        stage: 'composing',
-        progress: 80,
-        viewbox_w: traceResult.width,
-        viewbox_h: traceResult.height,
-      })
-      .eq('id', lessonId);
-
-    // 5. Stage 3: Composing step geometry
-    // Generate guide geometry (center lines, thirds, block-in shapes)
     const guideGeometry = generateGuideGeometry(
       traceResult.width,
       traceResult.height,
       analysis.parts
     );
 
-    // Assign contour, detail, and shade paths to steps
     const assignedPaths = assignPathsToSteps(
       traceResult.paths,
       analysis.steps,
@@ -121,18 +112,22 @@ export async function processLesson(lessonId: string): Promise<void> {
       traceResult.height
     );
 
-    // Inject guide geometry into step 0 (initial step)
+    // Inject guide geometry into step 0
     if (assignedPaths.length > 0) {
-      // Prepend guide lines to the first step
       assignedPaths[0] = [...guideGeometry, ...assignedPaths[0]];
     }
 
-    // Clear existing steps for this lesson (if retry)
     await supabase.from('lesson_steps').delete().eq('lesson_id', lessonId);
 
-    // Insert steps into lesson_steps table
     const stepsToInsert = analysis.steps.map((step, idx) => {
       const stepPaths: StepPath[] = assignedPaths[idx] || [];
+      
+      // Fallback: If no paths assigned to this step, use guide shapes if they belong to this part
+      if (stepPaths.length === 0 && idx === 0) {
+        // Step 0 always gets the guides
+        stepPaths.push(...guideGeometry);
+      }
+
       const durationMs = calculateStepDurationMs(stepPaths);
 
       return {
@@ -146,40 +141,43 @@ export async function processLesson(lessonId: string): Promise<void> {
       };
     });
 
+    if (stepsToInsert.length === 0) {
+      throw new Error('Lesson has no steps to display.');
+    }
+
     const { error: stepsInsertErr } = await supabase
       .from('lesson_steps')
       .insert(stepsToInsert);
 
     if (stepsInsertErr) {
-      throw new Error(`Failed to persist lesson steps: ${stepsInsertErr.message}`);
+      throw new Error(`Failed to save steps: ${stepsInsertErr.message}`);
     }
 
-    // Finalize lesson record
-    await supabase
-      .from('lessons')
-      .update({
-        status: 'ready',
-        stage: 'ready',
-        progress: 100,
-        viewbox_w: traceResult.width,
-        viewbox_h: traceResult.height,
-        analysis: analysis,
-        finished_at: new Date().toISOString(),
-        error_message: null,
-      })
-      .eq('id', lessonId);
+    // Finalize
+    await updateStage('ready', 100, {
+      status: 'ready',
+      analysis: analysis,
+      finished_at: new Date().toISOString(),
+      error_message: null,
+    });
+
   } catch (err: unknown) {
-    const errorMsg =
-      err instanceof Error ? err.message : 'An error occurred while generating your drawing lesson.';
-    // Log server-side without user data
-    console.error(`[Lesson Engine Error] Lesson ${lessonId} failed:`, errorMsg);
+    const technicalError = err instanceof Error ? err.message : String(err);
+    console.error(`[Pipeline Failure] Stage: ${currentStage}, Lesson: ${lessonId}, Error:`, technicalError);
+
+    let friendlyMessage = 'Something went wrong while generating, please retry';
+    if (technicalError.includes('too little contrast')) {
+      friendlyMessage = 'Could not trace this photo, try a clearer picture';
+    } else if (technicalError.toLowerCase().includes('model') || technicalError.toLowerCase().includes('quota')) {
+      friendlyMessage = 'AI model is temporarily unavailable, please retry';
+    }
 
     await supabase
       .from('lessons')
       .update({
         status: 'failed',
         stage: 'failed',
-        error_message: errorMsg,
+        error_message: friendlyMessage,
         finished_at: new Date().toISOString(),
       })
       .eq('id', lessonId);
@@ -187,3 +185,4 @@ export async function processLesson(lessonId: string): Promise<void> {
     lease.release();
   }
 }
+

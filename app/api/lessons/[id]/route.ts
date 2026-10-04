@@ -43,6 +43,30 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Lesson not found or access denied.' }, { status: 404 });
     }
 
+    // Stale job protection: Fail job if older than 4 minutes
+    const now = new Date();
+    const fourMinutesAgo = new Date(now.getTime() - 4 * 60 * 1000);
+    const isStale = (lesson.status === 'processing' || lesson.status === 'queued') && 
+                    new Date(lesson.started_at || lesson.created_at) < fourMinutesAgo;
+
+    if (isStale) {
+      const { data: updatedLesson } = await supabase
+        .from('lessons')
+        .update({
+          status: 'failed',
+          stage: 'failed',
+          error_message: 'Generation timed out, please retry',
+          finished_at: now.toISOString(),
+        })
+        .eq('id', lessonId)
+        .select()
+        .single();
+      
+      if (updatedLesson) {
+        Object.assign(lesson, updatedLesson);
+      }
+    }
+
     // 2. Fetch steps (for Push 3 animation player integration)
     const { data: steps } = await supabase
       .from('lesson_steps')
