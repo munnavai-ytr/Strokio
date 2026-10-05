@@ -41,27 +41,27 @@ export async function traceImageToPaths(
   const start = options.startTime || Date.now();
   const budget = options.timeBudgetSeconds || 35;
 
-  // 1. Normalize image with sharp: auto-rotate by EXIF, max 1024px inside, flatten on white
-  const pipeline = sharp(imageBuffer)
+  // Decode to RAW RGB pixels (never an encoded JPEG/PNG)
+  const { data: rawPixels, info } = await sharp(imageBuffer)
     .rotate()
     .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-    .flatten({ background: { r: 255, g: 255, b: 255 } });
-
-  const { data: normalizedData, info: normalizedInfo } = await pipeline
+    .flatten({ background: { r: 255, g: 255, b: 255 } })
+    .removeAlpha()
+    .toColourspace('srgb')
+    .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const { width, height } = normalizedInfo;
+  const { width, height, channels } = info;
 
-  async function getLayerMask(
-    process: (s: Sharp) => Sharp
-  ): Promise<Uint8Array> {
-    const { data } = await process(sharp(normalizedData, { raw: { width, height, channels: 3 } }))
-      .grayscale()
-      .normalise()
-      .extractChannel(0)
+  async function getLayerMask(process: (s: Sharp) => Sharp): Promise<Uint8Array> {
+    // grayscale + normalise FIRST (stretches contrast), then the layer operation
+    const { data } = await process(
+      sharp(rawPixels, { raw: { width, height, channels } }).grayscale().normalise()
+    )
+      .toColourspace('b-w')
       .raw()
       .toBuffer({ resolveWithObject: true });
-    
+
     if (data.length !== width * height) {
       throw new Error(`Mask size mismatch: expected ${width * height}, got ${data.length}`);
     }

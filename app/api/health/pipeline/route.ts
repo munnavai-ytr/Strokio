@@ -7,14 +7,16 @@ export const maxDuration = 60;
 export async function GET() {
   const start = Date.now();
   try {
-    // Generate a small synthetic 128x128 image in memory (filled circle on white)
-    const svgCircle = `<svg width="128" height="128" viewBox="0 0 128 128">
-      <rect width="128" height="128" fill="white" />
-      <circle cx="64" cy="64" r="40" fill="black" />
+    // Generate a synthetic 1200x900 JPEG with filled shapes on a light background
+    const svg = `<svg width="1200" height="900" viewBox="0 0 1200 900">
+      <rect width="1200" height="900" fill="#f8fafc" />
+      <circle cx="400" cy="450" r="180" fill="#1e293b" />
+      <rect x="700" y="300" width="300" height="300" rx="40" fill="#334155" />
+      <polygon points="600,150 700,280 500,280" fill="#0f172a" />
     </svg>`;
     
-    const imageBuffer = await sharp(Buffer.from(svgCircle))
-      .png()
+    const imageBuffer = await sharp(Buffer.from(svg))
+      .jpeg({ quality: 90 })
       .toBuffer();
 
     const result = await traceImageToPaths(imageBuffer);
@@ -23,9 +25,7 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       paths: result.paths.length,
-      width: result.width,
-      height: result.height,
-      ms
+      ms,
     });
   } catch (err: unknown) {
     console.error('[Health Pipeline] Failed:', err);

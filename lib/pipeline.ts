@@ -39,23 +39,31 @@ export async function processLesson(lessonId: string): Promise<void> {
 
     const updateStage = async (stage: string, progress: number, extra: any = {}) => {
       currentStage = stage;
-      await supabase
+      const { error: updateErr } = await supabase
         .from('lessons')
         .update({ stage, progress, ...extra })
         .eq('id', lessonId);
+      if (updateErr) {
+        throw new Error(`Failed to update lesson stage to ${stage}: ${updateErr.message}`);
+      }
     };
 
-    await supabase
+    currentStage = 'analyzing';
+    const { error: initErr } = await supabase
       .from('lessons')
       .update({
         status: 'processing',
-        stage: 'downloading',
+        stage: 'analyzing',
         progress: 5,
         started_at: new Date().toISOString(),
         attempts: (lesson.attempts || 0) + 1,
         error_message: null,
       })
       .eq('id', lessonId);
+
+    if (initErr) {
+      throw new Error(`Failed to initialize lesson processing: ${initErr.message}`);
+    }
 
     // 2. Download original image
     const storageClient = adminClient || supabase;
@@ -64,7 +72,7 @@ export async function processLesson(lessonId: string): Promise<void> {
       .download(lesson.image_path);
 
     if (downloadErr || !fileData) {
-      throw new Error('Could not download photo from storage.');
+      throw new Error(`Could not download photo from storage: ${downloadErr?.message || 'Empty file'}`);
     }
 
     const rawBuffer = Buffer.from(await fileData.arrayBuffer());
@@ -117,7 +125,15 @@ export async function processLesson(lessonId: string): Promise<void> {
       assignedPaths[0] = [...guideGeometry, ...assignedPaths[0]];
     }
 
-    await supabase.from('lesson_steps').delete().eq('lesson_id', lessonId);
+    currentStage = 'saving';
+    const { error: deleteStepsErr } = await supabase
+      .from('lesson_steps')
+      .delete()
+      .eq('lesson_id', lessonId);
+
+    if (deleteStepsErr) {
+      throw new Error(`Failed to clear previous lesson steps: ${deleteStepsErr.message}`);
+    }
 
     const stepsToInsert = analysis.steps.map((step, idx) => {
       const stepPaths: StepPath[] = assignedPaths[idx] || [];
@@ -163,13 +179,24 @@ export async function processLesson(lessonId: string): Promise<void> {
 
   } catch (err: unknown) {
     const technicalError = err instanceof Error ? err.message : String(err);
-    console.error(`[Pipeline Failure] Stage: ${currentStage}, Lesson: ${lessonId}, Error:`, technicalError);
+    console.error(`[Pipeline Failure] stage=${currentStage} lesson=${lessonId} error=${technicalError}`);
 
-    let friendlyMessage = 'Something went wrong while generating, please retry';
+    let friendlyMessage: string;
     if (technicalError.includes('too little contrast')) {
       friendlyMessage = 'Could not trace this photo, try a clearer picture';
-    } else if (technicalError.toLowerCase().includes('model') || technicalError.toLowerCase().includes('quota')) {
+    } else if (
+      technicalError.toLowerCase().includes('model') ||
+      technicalError.toLowerCase().includes('quota')
+    ) {
       friendlyMessage = 'AI model is temporarily unavailable, please retry';
+    } else if (currentStage === 'downloading' || currentStage === 'analyzing') {
+      friendlyMessage = 'AI analysis failed, please retry';
+    } else if (currentStage === 'tracing') {
+      friendlyMessage = 'Could not trace this photo, please retry or try a clearer picture';
+    } else if (currentStage === 'composing' || currentStage === 'saving') {
+      friendlyMessage = 'Could not build the drawing steps, please retry';
+    } else {
+      friendlyMessage = 'Something went wrong while generating, please retry';
     }
 
     await supabase
